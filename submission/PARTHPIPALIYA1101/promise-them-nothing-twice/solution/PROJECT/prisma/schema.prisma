@@ -1,0 +1,65 @@
+// Prisma Schema configuration
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Plan {
+  id         String     @id @default(uuid())
+  name       String     @unique // e.g. BASIC, PREMIUM, ENTERPRISE
+  rpmLimit   Int        // Base Requests Per Minute (Must be > 0)
+  burstLimit Int        // Maximum Burst Capacity Ceiling (Must be > 0)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  customers  Customer[]
+
+  @@map("plans")
+}
+
+model Customer {
+  id               String        @id @default(uuid()) // Unique X-Customer-ID (Auto-indexed as @id)
+  name             String
+  email            String        @unique
+  planId           String
+  plan             Plan          @relation(fields: [planId], references: [id], onDelete: Restrict)
+  customRpmLimit   Int?          // Custom RPM limit for Enterprise customers (Must be > 0)
+  customBurstLimit Int?          // Custom Burst limit for Enterprise customers (Must be > 0)
+  queueEnabled     Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  bucketBackup     BucketBackup?
+  queueLogs        QueueLog[]
+
+  @@index([planId])
+  @@map("customers")
+}
+
+model BucketBackup {
+  id          String   @id @default(uuid())
+  customerId  String   @unique
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tokens      Float
+  burstTokens Float
+  lastRefill  DateTime
+  updatedAt   DateTime @updatedAt
+
+  @@index([customerId])
+  @@map("bucket_backup")
+}
+
+model QueueLog {
+  id          String   @id @default(uuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  arrivalTime DateTime @default(now())
+  waitTimeMs  Int
+  status      String
+  createdAt   DateTime @default(now())
+
+  @@index([customerId])
+  @@map("queue_logs")
+}

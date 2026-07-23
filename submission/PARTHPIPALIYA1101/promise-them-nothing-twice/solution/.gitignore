@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+src/logs/*.log
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Test Coverage
+coverage/
+
+# IDE / Editor settings
+.vscode/
+.idea/
